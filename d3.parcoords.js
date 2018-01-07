@@ -24,7 +24,8 @@ d3.parcoords = function(config) {
     hideAxis : [],
     flipAxes: [],
     animationTime: 1100, // How long it takes to flip the axis when you double click
-    rotateLabels: false
+    rotateLabels: false,
+    outsideFilters: null
   };
 
   extend(__, config);
@@ -1056,11 +1057,25 @@ var brush = {
 //
 // @param newSelection - The new set of data items that is currently contained
 //                       by the brushes
-function brushUpdated(newSelection) {
+function brushUpdated(newSelection, brush_el) {
+  // if outside filters set then apply these outside filters
+  if(__.outsideFilters) {
+    newSelection = newSelection.filter(function(d) {
+      return d3.keys(__.outsideFilters).every(function(dim, i) {
+        return __.outsideFilters[dim].indexOf(d[dim]) > -1
+      })
+    })
+  }
+  
   __.brushed = newSelection;
-  events.brush.call(pc,__.brushed);
+  events.brush.call(pc,__.brushed, brush_el);
   pc.renderBrushed();
 }
+
+        
+// add brushUpdated to our parcoods
+//   to make it accessible from outside
+pc.brushUpdated = brushUpdated
 
 function brushPredicate(predicate) {
   if (!arguments.length) { return brush.predicate; }
